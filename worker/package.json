@@ -1,0 +1,23 @@
+{
+  "name": "youon-worker",
+  "type": "module",
+  "scripts": {
+    "dev": "ts-node --esm src/importWorker.ts",
+    "db:test": "ts-node --esm test-db.ts",
+    "build": "tsc",
+    "start": "node dist/src/importWorker.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "node-fetch": "^3.3.2",
+    "pg": "^8.12.0",
+    "unzipper": "^0.11.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.11",
+    "@types/pg": "^8.11.6",
+    "@types/unzipper": "^0.10.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
+  }
+}

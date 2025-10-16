@@ -1,0 +1,74 @@
+# -------- SO / IDE
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.orig
+.idea/
+.vscode/
+.history/
+
+# -------- Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# -------- Logs / pids
+logs/
+*.log
+*.pid
+*.pid.lock
+
+# =========================
+# PYTHON (API em ./api)
+# =========================
+api/**/__pycache__/
+api/**/*.py[cod]
+api/**/$py.class
+api/.venv/
+api/venv/
+api/env/
+api/ENV/
+api/pip-wheel-metadata/
+api/.mypy_cache/
+api/.pytest_cache/
+api/.coverage
+api/.coverage.*
+api/htmlcov/
+api/.tox/
+api/.pyre/
+api/.pytype/
+api/.ipynb_checkpoints/
+api/*.sqlite
+api/*.sqlite3
+api/build/
+api/dist/
+api/*.egg-info/
+api/.pytest_cache/
+
+# =========================
+# NODE/TS (worker em ./worker)
+# =========================
+worker/node_modules/
+worker/.cache/
+worker/*.tsbuildinfo
+worker/dist/
+worker/build/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -------- Artefatos/data (ajuste se quiser versionar)
+data/
+downloads/
+unzipped/
+*.zip
+*.7z
+*.tar
+*.gz
+
+# Manter marcadores vazios se quiser
+!data/.gitkeep
+!downloads/.gitkeep
+!unzipped/.gitkeep
