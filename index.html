@@ -170,9 +170,37 @@
     }
     .status-badge.active { background: #1a4d1a; color: #4caf50; }
     .status-badge.inactive { background: #4a1a1a; color: #f44336; }
+
+    #globalLoader {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 11, 15, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    #globalLoader.show {
+      display: flex;
+    }
+    #globalLoader .loader {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 6px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--accent);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
+  <div id="globalLoader" aria-hidden="true">
+    <div class="loader" role="status" aria-label="Carregando"></div>
+  </div>
   <h1>🔎 Buscador de CEP no GDB</h1>
 
   <div class="card">
@@ -181,7 +209,7 @@
       <input id="cep" type="text" placeholder="Digite o CEP (ex: 04826-240)" />
       <button id="btnBuscar" class="primary">Buscar</button>
       <button id="btnLimpar">Limpar</button>
-      <span class="muted" id="status"></span>
+      <span class="muted" id="status" aria-live="polite" aria-busy="false"></span>
     </div>
   </div>
 
@@ -191,7 +219,7 @@
       <input type="file" id="fileInput" accept=".geojson,.json" style="width: auto;" />
       <button id="btnUploadFile" class="primary">Carregar Arquivo</button>
       <button id="btnDownload">Baixar JSON</button>
-      <span class="muted" id="uploadStatus"></span>
+      <span class="muted" id="uploadStatus" aria-live="polite" aria-busy="false"></span>
     </div>
     </div>
 
@@ -225,6 +253,7 @@
     const $fileInput = document.getElementById('fileInput');
     const $btnUploadFile = document.getElementById('btnUploadFile');
     const $uploadStatus = document.getElementById('uploadStatus');
+    const $globalLoader = document.getElementById('globalLoader');
     const $modalOverlay = document.getElementById('modalOverlay');
     const $modalTitle = document.getElementById('modalTitle');
     const $modalContent = document.getElementById('modalContent');
@@ -234,8 +263,26 @@
 
     function onlyDigits(s){ return (s||"").replace(/\D/g, ""); }
 
-    function setStatus(msg){ $status.textContent = msg || ""; }
-    function setUploadStatus(msg){ $uploadStatus.textContent = msg || ""; }
+    function toggleLoader(isLoading){
+      if (isLoading){
+        $globalLoader.classList.add('show');
+        $globalLoader.setAttribute('aria-hidden', 'false');
+      } else {
+        $globalLoader.classList.remove('show');
+        $globalLoader.setAttribute('aria-hidden', 'true');
+      }
+    }
+
+    function setStatus(msg, isLoading = false){
+      $status.textContent = msg || "";
+      $status.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+      toggleLoader(!!isLoading);
+    }
+    function setUploadStatus(msg, isLoading = false){
+      $uploadStatus.textContent = msg || "";
+      $uploadStatus.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+      toggleLoader(!!isLoading);
+    }
     function setResumo(html){ $resumo.innerHTML = html || ""; }
     function clearResults(){
       setResumo(""); $addressList.innerHTML = ""; setStatus(""); setUploadStatus("");
@@ -471,7 +518,9 @@
         setStatus("CEP inválido. Use 8 dígitos."); return;
       }
       clearResults();
-      setStatus("Consultando API...");
+      setStatus("Consultando API...", true);
+
+      let hasError = false;
 
       try {
         const url = `${API_BASE}/search?cep=${encodeURIComponent(cep)}`;
@@ -482,14 +531,19 @@
         }
         const data = await resp.json();
         lastData = data;
-
-        setStatus("Pronto.");
         setResumo(`<div>Total: <b>${data.count || 0}</b> unidade(s) consumidora(s)</div>`);
 
         buildAddressList(data.features || []);
       } catch (e){
         console.error(e);
-        setStatus("Falha na consulta: " + e.message);
+        hasError = true;
+        setStatus("Falha na consulta: " + e.message, false);
+      } finally {
+        if (hasError){
+          setStatus($status.textContent, false);
+        } else {
+          setStatus("Pronto.", false);
+        }
       }
     }
 
@@ -501,27 +555,27 @@
       }
 
       clearResults();
-      setUploadStatus("Carregando arquivo...");
+      setUploadStatus("Carregando arquivo...", true);
 
       const reader = new FileReader();
-      
+
       reader.onload = function(e){
         try {
           const data = JSON.parse(e.target.result);
           lastData = data;
 
-          setUploadStatus("✅ Carregado com sucesso!");
+          setUploadStatus("✅ Carregado com sucesso!", false);
           setResumo(`<div>Arquivo: <b>${file.name}</b></div><div>Total: <b>${data.features?.length || 0}</b> unidade(s) consumidora(s)</div>`);
 
           buildAddressList(data.features || []);
         } catch (err){
           console.error(err);
-          setUploadStatus("❌ Erro ao processar arquivo: " + err.message);
+          setUploadStatus("❌ Erro ao processar arquivo: " + err.message, false);
         }
       };
 
       reader.onerror = function(){
-        setUploadStatus("❌ Erro ao ler arquivo.");
+        setUploadStatus("❌ Erro ao ler arquivo.", false);
       };
 
       reader.readAsText(file);
